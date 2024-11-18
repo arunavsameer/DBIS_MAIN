@@ -1,10 +1,13 @@
+// src/App.js
 import React, { useState } from 'react';
-import axios from 'axios';
-import Login from './Login';
-import HomePage from './components/HomePage';
-import Register from './components/Register';
-import UserAnalytics from './components/UserAnalytics';
 import './App.css';
+import HomePage from './components/HomePage';
+import Login from './Login';
+import Register from './Register';
+import UserAnalytics from './components/UserAnalytics';
+import ProblemData from './components/ProblemData';
+import UserComparison from './components/UserComparison';
+import axios from 'axios';
 
 function App() {
   const [handle, setHandle] = useState('');
@@ -14,20 +17,27 @@ function App() {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState('home');
+  const [loading, setLoading] = useState(false);
 
-  // Function to fetch user data from Codeforces API
-  const fetchUserData = async () => {
+  // Navigation Function
+  const navigateTo = (page) => setCurrentPage(page);
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setHandle('');
+    setCurrentPage('login');
+  };
+
+  const fetchUserData = async (username) => {
+    setLoading(true);
     try {
-      // Fetch basic user info
-      const userResponse = await axios.get(`https://codeforces.com/api/user.info?handles=${handle}`);
+      const userResponse = await axios.get(`https://codeforces.com/api/user.info?handles=${username}`);
       setUserData(userResponse.data.result[0]);
 
-      // Fetch user's rating history
-      const ratingResponse = await axios.get(`https://codeforces.com/api/user.rating?handle=${handle}`);
+      const ratingResponse = await axios.get(`https://codeforces.com/api/user.rating?handle=${username}`);
       setRatingHistory(ratingResponse.data.result);
 
-      // Fetch user's problem stats and process data
-      const problemStatsResponse = await axios.get(`https://codeforces.com/api/user.status?handle=${handle}`);
+      const problemStatsResponse = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`);
       const problems = problemStatsResponse.data.result;
 
       const problemDifficulties = {};
@@ -39,7 +49,6 @@ function App() {
           const difficulty = problem.problem.rating || 'Unrated';
           problemDifficulties[difficulty] = (problemDifficulties[difficulty] || 0) + 1;
         }
-
         verdicts[problem.verdict] = (verdicts[problem.verdict] || 0) + 1;
         languages[problem.programmingLanguage] = (languages[problem.programmingLanguage] || 0) + 1;
       });
@@ -57,54 +66,75 @@ function App() {
       setUserData(null);
       setRatingHistory([]);
       setProblemStats(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle form submission to fetch user data
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (handle) fetchUserData();
-  };
-
-  // Navigation function to change the current page
-  const navigateTo = (page) => setCurrentPage(page);
-
   return (
     <div className="App">
-      {/* Render HomePage component */}
       {currentPage === 'home' && (
         <HomePage
           onLoginClick={() => navigateTo('login')}
           onRegisterClick={() => navigateTo('register')}
           onUserAnalyticsClick={() => navigateTo(isAuthenticated ? 'userAnalytics' : 'login')}
+          onProblemAnalysisClick={() => navigateTo('problemData')}
+          onUserComparisonClick={() => navigateTo('userComparison')}
         />
       )}
 
-      {/* Render Login component */}
       {currentPage === 'login' && (
         <Login
-          onLogin={() => {
+          onLogin={(username) => {
             setIsAuthenticated(true);
+            setHandle(username);
+            fetchUserData(username); // Fetch user data after login
             navigateTo('userAnalytics');
           }}
-          onRegisterClick={() => navigateTo('register')}
+          onSwitch={() => navigateTo('register')}
+          onBackToHome={() => navigateTo('home')}
         />
       )}
 
-      {/* Render Register component */}
-      {currentPage === 'register' && <Register onLoginClick={() => navigateTo('login')} />}
+      {currentPage === 'register' && (
+        <Register
+          onRegister={(username) => {
+            setIsAuthenticated(true);
+            setHandle(username);
+            fetchUserData(username); // Fetch user data after registration
+            navigateTo('userAnalytics');
+          }}
+          onSwitch={() => navigateTo('login')}
+          onBackToHome={() => navigateTo('home')}
+        />
+      )}
 
-      {/* Render UserAnalytics component for authenticated users */}
       {currentPage === 'userAnalytics' && isAuthenticated && (
         <UserAnalytics
           handle={handle}
+          onLogout={handleLogout}
           setHandle={setHandle}
-          handleSubmit={handleSubmit}
+          handleSubmit={() => {}}
           userData={userData}
           error={error}
           ratingHistory={ratingHistory}
           problemStats={problemStats}
+          loading={loading}
+          onBackToHome={() => navigateTo('home')}
+          onProblemAnalysisClick={() => navigateTo('problemData')}
         />
+      )}
+
+      {currentPage === 'problemData' && (
+        <ProblemData
+          handle={handle}
+          problemStats={problemStats}
+          onBackToHome={() => navigateTo('home')}
+        />
+      )}
+
+      {currentPage === 'userComparison' && (
+        <UserComparison onBackToHome={() => navigateTo('home')} />
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './HomePage.css';
 
-function HomePage({ onLoginClick, onUserAnalyticsClick, onRegisterClick }) {
+function HomePage({ onLoginClick, onUserAnalyticsClick, onRegisterClick, onProblemAnalysisClick, onUserComparisonClick }) {
   const [showIntro, setShowIntro] = useState(true);
 
   // Create stars on component mount
@@ -11,7 +11,7 @@ function HomePage({ onLoginClick, onUserAnalyticsClick, onRegisterClick }) {
     // Function to create stars
     function createStars() {
       const container = document.querySelector('.stars-container');
-      for (let i = 0; i < 100; i++) { // Adjust the number of stars as needed
+      for (let i = 0; i < 100; i++) {
         const star = document.createElement('div');
         star.className = 'star';
         
@@ -35,7 +35,7 @@ function HomePage({ onLoginClick, onUserAnalyticsClick, onRegisterClick }) {
 
   return (
     <div className="homepage-container">
-      <div className="stars-container"></div> {/* Starry background container */}
+      <div className="stars-container"></div>
       {showIntro && (
         <div className="intro">
           <h1 className="intro-text">Codeforces Analytics</h1>
@@ -77,17 +77,17 @@ function HomePage({ onLoginClick, onUserAnalyticsClick, onRegisterClick }) {
               Dive into user performance, contest analysis, and problem-solving trends like never before.
             </p>
             <div className="features">
-              <div className="feature-card">
+              <div className="feature-card" onClick={onUserAnalyticsClick}>
                 <h2>User Insights</h2>
                 <p>Track performance metrics, see skill growth, and uncover historical data trends.</p>
               </div>
-              <div className="feature-card">
+              <div className="feature-card" onClick={onProblemAnalysisClick}>
                 <h2>Problem Analysis</h2>
                 <p>Analyze problem difficulty, user success rates, and popular problem types.</p>
               </div>
-              <div className="feature-card">
-                <h2>Leaderboard Statistics</h2>
-                <p>View rankings, competition stats, and progress benchmarks across the platform.</p>
+              <div className="feature-card" onClick={onUserComparisonClick}>
+                <h2>User Comparison</h2>
+                <p>Compare your performance with another user's on Codeforces.</p>
               </div>
             </div>
           </div>
